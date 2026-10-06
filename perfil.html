@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Escolher Perfil</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" style="justify-content: center; text-align: center;">
+        
+        <!-- Logo Real (log.png) -->
+        <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;">
+            <img src="log.png" alt="Logo Bate Ponto" style="width: 60px; height: 60px; object-fit: contain;">
+            <h1 style="font-size: 1.3rem; margin-top: 6px; color: #001F3F;">Bate Ponto</h1>
+        </div>
+
+        <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Como deseja entrar?</h2>
+        <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 30px;">Selecione o seu papel principal na obra.</p>
+
+        <!-- Opção 1: Dono da Obra (Vai para as perguntas do Dono) -->
+        <div class="card" onclick="irParaDono()" style="cursor: pointer; text-align: left; border: 2px solid #E2E8F0; transition: border-color 0.2s, background 0.2s; margin-bottom: 15px;" onmouseover="this.style.borderColor='#FF7A00'; this.style.background='#FFFBF5'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 2rem;">🏗️</span>
+                <div>
+                    <h3 style="font-size: 1rem; color: #0F172A; margin-bottom: 2px;">Dono da Obra</h3>
+                    <p style="font-size: 0.8rem; color: #64748B;">Gerencie a obra, crie projetos e acompanhe a equipe.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opção 2: Organizar uma Obra / Trabalhador (Vai para as perguntas do Trabalhador) -->
+        <div class="card" onclick="irParaOrganizarObra()" style="cursor: pointer; text-align: left; border: 2px solid #E2E8F0; transition: border-color 0.2s, background 0.2s;" onmouseover="this.style.borderColor='#FF7A00'; this.style.background='#FFFBF5'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 2rem;">👷</span>
+                <div>
+                    <h3 style="font-size: 1rem; color: #0F172A; margin-bottom: 2px;">Organizar uma Obra</h3>
+                    <p style="font-size: 0.8rem; color: #64748B;">Responda às perguntas e configure o seu registo de ponto.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function irParaDono() {
+            window.location.href = 'config_dono.html';
+        }
+
+        function irParaOrganizarObra() {
+            
+            window.location.href = 'config_trabalhador.html';
+        }
+    </script>
+</body>
+</html>

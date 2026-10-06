@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Painel Principal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .ponto-btn { 
+            width: 210px; height: 210px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.2rem; font-weight: 800; margin: 25px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 25px rgba(255, 122, 0, 0.35); cursor: pointer; transition: transform 0.1s, background 0.2s;
+        }
+        .ponto-btn:active { transform: scale(0.95); }
+        .ponto-btn.ativo { background: #DC2626; box-shadow: 0 12px 25px rgba(220, 38, 38, 0.35); }
+        
+        .timer-display { font-size: 3rem; color: var(--text-main); text-align: center; font-weight: 800; display: none; margin: 10px 0; }
+        .status-ativo { background: rgba(22, 101, 52, 0.15); color: #166534; padding: 8px 16px; border-radius: 20px; text-align: center; font-weight: 700; font-size: 0.9rem; display: none; width: fit-content; margin: 0 auto 15px auto; }
+        .tab-content { display: none; flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        .tab-content.active { display: block; }
+        
+        .cargo-row { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 2fr auto; gap: 8px; align-items: end; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px dashed var(--card-border); }
+        .trab-item { display: flex; flex-direction: column; gap: 8px; background: var(--bg-container); padding: 12px; border-radius: 10px; border: 1px solid var(--card-border); margin-bottom: 8px; transition: border-color 0.2s; }
+        .trab-item:hover { border-color: var(--primary); }
+        .trab-actions { display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--card-border); padding-top: 8px; margin-top: 4px; }
+        @media (max-width: 768px) { .cargo-row { grid-template-columns: 1fr; gap: 10px; align-items: start; } }
+
+        /* Animação de Sucesso (Toast Flutuante) */
+        #toastSucesso {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #166534; color: white; padding: 12px 24px; border-radius: 30px;
+            font-weight: 700; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(22, 101, 52, 0.4);
+            display: flex; align-items: center; gap: 10px; z-index: 9999;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            opacity: 0; pointer-events: none;
+        }
+        #toastSucesso.mostrar {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast de Sucesso Animado Global -->
+    <div id="toastSucesso">
+        <span style="font-size: 1.2rem;">🎉</span>
+        <span id="toastMsg">Operação realizada com sucesso!</span>
+    </div>
+
+    <div class="app-container">
+        <!-- Topo -->
+        <div>
+            <div class="logo-container" style="margin-bottom: 15px;">
+                <img src="log.png" alt="Logo Bate Ponto">
+                <h1>Bate Ponto</h1>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px;">
+                <span id="nomeUserBadge" style="font-size: 0.9rem; font-weight: 600; color: var(--text-sub);">Bem-vindo</span>
+                <span style="font-size: 0.75rem; background: rgba(255,122,0,0.1); color: var(--primary); padding: 4px 10px; border-radius: 12px; font-weight: 700;">🇧🇷 Horário de Brasília</span>
+            </div>
+        </div>
+
+        <!-- ================= ABA 1: BATER PONTO (Trabalhador) ================= -->
+        <div id="abaBater" class="tab-content active">
+            <div id="viewBotaoPonto" class="animate-fade" style="text-align: center;">
+                <div style="margin-bottom: 15px;">
+                    <p id="dataAtual" style="color: var(--text-sub); font-size: 0.95rem; text-transform: capitalize;"></p>
+                    <h2 id="relogioTopo" style="font-size: 2.4rem; color: var(--text-main); font-weight: 800; margin-top: 4px;">00:00:00</h2>
+                </div>
+                <button class="ponto-btn" onclick="abrirFormularioChegada()">
+                    <span style="font-size: 1.8rem;">👆</span> BATER PONTO
+                </button>
+                <div class="card" style="text-align: center; padding: 12px; max-width: 320px; margin: 0 auto;">
+                    <p style="font-size: 0.8rem; color: #166534; font-weight: 600;">📍 Localização GPS Verificada no Canteiro</p>
+                </div>
+            </div>
+
+            <!-- Formulário Chegada -->
+            <div id="viewFormChegada" class="card animate-fade" style="display: none; border: 2px solid var(--primary); max-width: 500px; margin: 0 auto;">
+                <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 14px;">⏰ Detalhes da Chegada</h3>
+                
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label style="color: var(--primary);">Vincular este ponto a qual obra?</label>
+                    <select id="inputObraPonto" style="cursor: pointer; background: rgba(255,122,0,0.05);"></select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Horário de chegada</label>
+                        <input type="text" id="inputHoraChegada" value="08:00">
+                    </div>
+                    <div class="input-group">
+                        <label>Sua Função Hoje</label>
+                        <select id="inputFuncaoChegada" style="cursor: pointer;">
+                            <option value="Ajudante">👷 Ajudante</option>
+                            <option value="Pedreiro">🧱 Pedreiro</option>
+                            <option value="Betoneiro">🔄 Betoneiro</option>
+                            <option value="Gesseiro">🏠 Gesseiro</option>
+                            <option value="Eletricista">⚡ Eletricista</option>
+                            <option value="Pintor">🎨 Pintor</option>
+                            <option value="Outro">🛠️ Outro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Acompanhante / Colega</label>
+                    <input type="text" id="inputAcompanhante" placeholder="Ex: Marcos (Ajudante)">
+                </div>
+                <button class="btn-orange" onclick="confirmarIniciarPonto()" style="padding: 14px;">Confirmar e Iniciar Ponto</button>
+                <button class="btn-outline" onclick="voltarParaBotao()" style="margin-top: 10px;">Cancelar</button>
+            </div>
+
+            <!-- Ponto Ativo -->
+            <div id="viewPontoAtivo" style="display: none; text-align: center;" class="animate-fade">
+                <div id="statusTrabalho" class="status-ativo">🟢 Ponto Ativo em Andamento</div>
+                <div id="cronometro" class="timer-display">00:00:00</div>
+                <div class="card" style="max-width: 450px; margin: 0 auto 20px auto; text-align: left;">
+                    <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px;">🏢 <strong>Obra:</strong> <span id="txtObraCard">Avulso</span></p>
+                    <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px;">⏰ <strong>Chegada:</strong> <span id="txtChegada">08:00</span></p>
+                    <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px;">👷 <strong>Função:</strong> <span id="txtFuncaoCard">Pedreiro</span></p>
+                    <p style="font-size: 0.85rem; color: var(--text-sub);">🤝 <strong>Acompanhante:</strong> <span id="txtAcomp">Marcos</span></p>
+                </div>
+                <button class="ponto-btn ativo" onclick="abrirFormularioEncerramento()">
+                    <span style="font-size: 1.5rem;">⏹</span> ENCERRAR PONTO
+                </button>
+            </div>
+
+            <!-- Formulário Encerramento -->
+            <div id="viewFormEncerramento" class="card animate-fade" style="display: none; border: 2px solid #DC2626; max-width: 500px; margin: 0 auto;">
+                <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 10px;">📝 Relatório de Atividades</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;">Descreva o que foi realizado hoje (será enviado ao Dono da Obra).</p>
+                <div class="input-group">
+                    <textarea id="inputRelatorio" placeholder="Ex: Conclusão da alvenaria..." style="height: 110px; resize: none;"></textarea>
+                </div>
+                <button class="btn-orange" onclick="finalizarPontoDefinitivo()" style="background: #DC2626;">Enviar Relatório e Fechar Ponto</button>
+            </div>
+
+            <!-- Sucesso -->
+            <div id="viewPontoEncerrado" class="card animate-fade" style="display: none; text-align: center; border: 2px solid #166534; max-width: 450px; margin: 0 auto; padding: 30px;">
+                <div style="font-size: 3.5rem; margin-bottom: 10px;">🎉</div>
+                <h3 style="font-size: 1.3rem; color: #166534; margin-bottom: 8px; font-weight: 800;">Ponto Registrado com Sucesso!</h3>
+                <div class="card" style="background: var(--bg-container); margin-bottom: 20px;">
+                    <p style="font-size: 0.9rem; color: var(--text-main);">⏱ Tempo Trabalhado: <strong id="resumoTempoTotal">00:00:00</strong></p>
+                </div>
+                <button class="btn-orange" onclick="window.location.reload()" style="background: #166534;">Concluir</button>
+            </div>
+        </div>
+
+        <!-- ================= ABA OBRAS (Trabalhador) ================= -->
+        <div id="abaObras" class="tab-content animate-fade">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="font-size: 1.2rem; color: var(--text-main);">🏗️ Obras e Vínculos</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-outline" onclick="toggleFormConvite()" style="padding: 8px 12px; font-size: 0.85rem; border-color: var(--primary); color: var(--primary);">🔗 Usar Convite</button>
+                    <button class="btn-orange" onclick="toggleFormCriarObra()" style="padding: 8px 12px; font-size: 0.85rem;">+ Manual</button>
+                </div>
+            </div>
+
+            <!-- Formulário Entrar via Convite -->
+            <div id="formConviteCard" class="card animate-fade" style="display: none; border: 2px dashed var(--primary); margin-bottom: 20px; background: rgba(255,122,0,0.03);">
+                <h3 style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 12px;">🔗 Entrar em Obra via Código</h3>
+                <div class="input-group">
+                    <input type="text" id="inputCodigoConvite" placeholder="Ex: BP-1234" style="text-transform: uppercase; font-weight: bold; text-align: center; letter-spacing: 2px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-orange" onclick="entrarComConvite()" style="padding: 12px;">Vincular Obra</button>
+                    <button class="btn-outline" onclick="toggleFormConvite()" style="padding: 12px;">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Formulário Criar/Editar Manual -->
+            <div id="formCriarObraCard" class="card animate-fade" style="display: none; border: 2px solid var(--primary); margin-bottom: 20px;">
+                <h3 id="tituloFormObra" style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 12px;">🛠️ Registar Obra e Valores</h3>
+                <div class="input-group"><label>Nome da Obra</label><input type="text" id="novaObraNome" placeholder="Ex: Edifício Bella Vista"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group"><label>Total Dias Trabalhados</label><input type="number" id="novaObraDias" placeholder="Ex: 20"></div>
+                    <div class="input-group"><label>Diárias Já Pagas</label><input type="number" id="novaObraDiasPagos" placeholder="Ex: 5" value="0"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group"><label>Valor Diária (R$)</label><input type="number" step="0.01" id="novaObraDiaria" placeholder="Ex: 180.00"></div>
+                    <div class="input-group"><label>Horário</label><input type="text" id="novaObraHorario" placeholder="Ex: 07:30 às 17:00"></div>
+                </div>
+                <div class="input-group"><label>Atividades</label><textarea id="novaObraOQueFez" placeholder="Ex: Reboco..." style="height: 70px; resize: none;"></textarea></div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnSalvarObra" class="btn-orange" onclick="salvarNovaObra()" style="padding: 12px;">Salvar Registo</button>
+                    <button class="btn-outline" onclick="fecharFormObra()" style="padding: 12px;">Cancelar</button>
+                </div>
+            </div>
+
+            <div id="listaObrasContainer"></div>
+        </div>
+
+        <!-- ================= ABA GESTÃO (Exclusiva para Dono da Obra) ================= -->
+        <div id="abaGestaoDono" class="tab-content animate-fade">
+            
+            <div id="viewGestaoLista">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="font-size: 1.2rem; color: var(--text-main);">🏗️ Gestão de Canteiros</h2>
+                    <button class="btn-orange" onclick="toggleFormCriarObraDono()" style="width: auto; padding: 10px 16px; font-size: 0.9rem;">+ Nova Obra</button>
+                </div>
+
+                <!-- Formulário do Dono: Criar/Editar Nova Obra -->
+                <div id="formCriarObraDono" class="card animate-fade" style="display: none; border: 2px solid var(--primary); margin-bottom: 20px;">
+                    <h3 id="tituloObraDonoForm" style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 12px;">🛠️ Configurar Novo Canteiro e Equipa</h3>
+                    
+                    <div class="input-group">
+                        <label>Nome do Projeto / Obra</label>
+                        <input type="text" id="donoNovaObraNome" placeholder="Ex: Residencial Parque">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Duração Prevista (Dias)</label>
+                            <input type="number" id="donoNovaObraDias" placeholder="Ex: 120">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 15px;">
+                            <input type="checkbox" id="donoObraIndeterminado" style="width: 20px; height: 20px; cursor: pointer;" onchange="toggleDiasDono()">
+                            <label for="donoObraIndeterminado" style="margin: 0; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text-sub);">Indeterminado</label>
+                        </div>
+                    </div>
+
+                    <div id="secaoCargosCriacao">
+                        <div style="margin-top: 20px; margin-bottom: 10px; border-top: 1px solid var(--card-border); padding-top: 16px;">
+                            <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 6px;">👥 Funções e Nomes dos Trabalhadores</h4>
+                            <p style="font-size: 0.78rem; color: var(--text-sub); margin-bottom: 12px;">Adicione a função, diária e o nome exato dos trabalhadores iniciais.</p>
+                            
+                            <div id="donoCargosContainer"></div>
+                            
+                            <button class="btn-outline" onclick="adicionarLinhaCargo()" style="width: auto; padding: 8px 14px; font-size: 0.8rem; margin-bottom: 16px; border-style: dashed;">+ Adicionar Outra Função / Pessoa</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnSalvarObraDonoText" class="btn-orange" onclick="salvarObraDono()" style="padding: 12px;">Criar Obra Completa</button>
+                        <button class="btn-outline" onclick="toggleFormCriarObraDono()" style="padding: 12px;">Cancelar</button>
+                    </div>
+                </div>
+
+                <div id="listaObrasDonoContainer"></div>
+            </div>
+
+            <!-- Vista de Relatórios -->
+            <div id="viewGestaoRelatorios" style="display: none;" class="animate-fade">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <button class="btn-outline" onclick="fecharRelatorios()" style="width: auto; padding: 8px 14px;">⬅️ Voltar</button>
+                    <h2 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">Relatórios e Horas</h2>
+                </div>
+                
+                <div class="card" style="background: var(--primary); color: white; border: none;">
+                    <h3 id="relatorioNomeTrab" style="font-size: 1.2rem; margin-bottom: 4px;">Nome</h3>
+                    <p id="relatorioFuncaoTrab" style="font-size: 0.9rem; opacity: 0.9;">Função</p>
+                    <span id="relatorioBadgeVinculo" style="display:none; font-size:0.75rem; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:12px; margin-top:8px; width:fit-content;">🔗 Sincronizado via Convite</span>
+                </div>
+
+                <div id="cardFormRelatorioManual" class="card" style="border: 2px dashed var(--primary); margin-bottom: 16px; background: rgba(255,122,0,0.02);">
+                    <h4 id="tituloFormRelatorioManual" style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 10px;">➕ Adicionar Relatório Manual</h4>
+                    <input type="hidden" id="editRelatorioIndex" value="-1">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div class="input-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Data</label><input type="text" id="inputRelData" placeholder="Ex: 06 de Outubro"></div>
+                        <div class="input-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Horas Trabalhadas</label><input type="text" id="inputRelHoras" placeholder="Ex: 08:00:00" value="08:00:00"></div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 10px;"><label style="font-size:0.75rem;">O que fez / Atividades</label><textarea id="inputRelOquefez" placeholder="Ex: Fechamento de parede..." style="height: 60px; resize:none;"></textarea></div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-orange" onclick="salvarRelatorioManual()" style="padding: 8px 12px; font-size: 0.85rem;">Salvar Registo</button>
+                        <button class="btn-outline" onclick="limparFormRelatorioManual()" style="padding: 8px 12px; font-size: 0.85rem;">Limpar</button>
+                    </div>
+                </div>
+
+                <div id="listaRelatoriosContainer"></div>
+            </div>
+
+        </div>
+
+        <!-- ================= ABA 3: PERFIL ================= -->
+        <div id="abaPerfil" class="tab-content animate-fade">
+            <h2 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 16px;">👤 Configurações de Perfil</h2>
+            
+            <div class="card">
+                <div class="input-group">
+                    <label>Nome / Apelido</label>
+                    <input type="text" id="editNome" value="Utilizador">
+                </div>
+                <button class="btn-orange" onclick="salvarPerfilNome()" style="padding: 12px;">Salvar Alterações</button>
+            </div>
+
+            <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h4 style="font-size: 0.95rem; color: var(--text-main);">Modo de Uso</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-sub);">Ativo: <strong id="lblModoAtual" style="color: var(--primary);">Trabalhador</strong></p>
+                </div>
+                <button class="btn-outline" onclick="alternarModoPerfil()" style="width: auto; padding: 10px 14px; font-size: 0.85rem;">🔄 Mudar para <span id="lblModoTrocar">Dono</span></button>
+            </div>
+
+            <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h4 style="font-size: 0.95rem; color: var(--text-main);">Tema Visual</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-sub);">Alternar entre Modo Escuro e Claro</p>
+                </div>
+                <button class="btn-outline" onclick="alternarDarkMode()" style="width: auto; padding: 10px 18px;" id="btnTemaText">🌙 Escuro</button>
+            </div>
+
+            <button class="btn-outline" onclick="window.location.href='login.html'" style="color: #DC2626; border-color: rgba(220, 38, 38, 0.3); margin-top: 10px;">Sair da Conta</button>
+        </div>
+
+        <!-- MENU INFERIOR -->
+        <div class="bottom-nav" id="bottomNavContainer"></div>
+    </div>
+
+    <script>
+        // Sistema de Toast Animado de Sucesso
+        function mostrarSucesso(mensagem = 'Operação realizada com sucesso!') {
+            const toast = document.getElementById('toastSucesso');
+            const msgEl = document.getElementById('toastMsg');
+            if(msgEl) msgEl.innerText = mensagem;
+            if(toast) {
+                toast.classList.add('mostrar');
+                setTimeout(() => {
+                    toast.classList.remove('mostrar');
+                }, 3000);
+            }
+        }
+
+        function atualizarHorarioBrasilia() {
+            const agora = new Date();
+            const optsHora = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const optsData = { timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+            const r = document.getElementById('relogioTopo'), d = document.getElementById('dataAtual');
+            if(r) r.innerText = new Intl.DateTimeFormat('pt-BR', optsHora).format(agora);
+            if(d) d.innerText = new Intl.DateTimeFormat('pt-BR', optsData).format(agora);
+        }
+        setInterval(atualizarHorarioBrasilia, 1000);
+        atualizarHorarioBrasilia();
+
+        if(localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            const b = document.getElementById('btnTemaText');
+            if(b) b.innerText = '☀️ Claro';
+        }
+        function alternarDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isD = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isD);
+            document.getElementById('btnTemaText').innerText = isD ? '☀️ Claro' : '🌙 Escuro';
+        }
+
+        function copiarCodigo(codigo) {
+            navigator.clipboard.writeText(codigo).then(() => {
+                mostrarSucesso('Código ' + codigo + ' copiado com sucesso!');
+            });
+        }
+
+        let timerInterval, segundos = 0, obraAtualPontoId = null;
+        const tipoUsuario = localStorage.getItem('tipoUsuario') || 'trabalhador';
+        let dadosSalvos = JSON.parse(localStorage.getItem('dadosPerfil')) || {};
+        
+        if(!dadosSalvos.id) {
+            dadosSalvos.id = Date.now() + Math.floor(Math.random() * 1000);
+            localStorage.setItem('dadosPerfil', JSON.stringify(dadosSalvos));
+        }
+
+        const navContainer = document.getElementById('bottomNavContainer');
+
+        if(tipoUsuario === 'dono') {
+            document.getElementById('abaBater').remove();
+            document.getElementById('abaObras').remove();
+            
+            document.getElementById('nomeUserBadge').innerText = `Gestor: ${dadosSalvos.nome || 'Dono'}`;
+            document.getElementById('editNome').value = dadosSalvos.nome || '';
+            document.getElementById('lblModoAtual').innerText = 'Dono da Obra';
+            document.getElementById('lblModoTrocar').innerText = 'Trabalhador';
+
+            document.getElementById('abaGestaoDono').classList.add('active');
+            navContainer.innerHTML = `
+                <button class="nav-item active" onclick="mudarAbaDono('gestao', this)"><span>📊</span>Gestão</button>
+                <button class="nav-item" onclick="mudarAbaDono('perfil', this)"><span>👤</span>Perfil</button>
+            `;
+            renderizarObrasDono();
+        } else {
+            document.getElementById('abaGestaoDono').remove();
+            if(dadosSalvos.nome) {
+                document.getElementById('nomeUserBadge').innerText = `Olá, ${dadosSalvos.nome}`;
+                document.getElementById('editNome').value = dadosSalvos.nome;
+                const sel = document.getElementById('inputFuncaoChegada');
+                if(sel && dadosSalvos.funcao) sel.value = dadosSalvos.funcao;
+            }
+            document.getElementById('lblModoAtual').innerText = 'Trabalhador';
+            document.getElementById('lblModoTrocar').innerText = 'Dono da Obra';
+
+            navContainer.innerHTML = `
+                <button class="nav-item active" onclick="mudarAbaTrabalhador('bater', this)"><span>🕒</span>Bater Ponto</button>
+                <button class="nav-item" onclick="mudarAbaTrabalhador('obras', this)"><span>🏗️</span>Obras</button>
+                <button class="nav-item" onclick="mudarAbaTrabalhador('perfil', this)"><span>👤</span>Perfil</button>
+            `;
+            renderizarListaObrasTrabalhador();
+        }
+
+        function salvarPerfilNome() {
+            const novoNome = document.getElementById('editNome').value.trim();
+            if(!novoNome) return alert('Digite um nome válido.');
+            dadosSalvos.nome = novoNome;
+            localStorage.setItem('dadosPerfil', JSON.stringify(dadosSalvos));
+            mostrarSucesso('Nome editado e salvo com sucesso!');
+        }
+
+        function alternarModoPerfil() {
+            localStorage.setItem('tipoUsuario', tipoUsuario === 'trabalhador' ? 'dono' : 'trabalhador');
+            window.location.reload();
+        }
+
+        function mudarAbaTrabalhador(aba, el) {
+            document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active'));
+            if(aba === 'bater') document.getElementById('abaBater').classList.add('active');
+            if(aba === 'obras') document.getElementById('abaObras').classList.add('active');
+            if(aba === 'perfil') document.getElementById('abaPerfil').classList.add('active');
+            el.classList.add('active');
+        }
+
+        function mudarAbaDono(aba, el) {
+            document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active'));
+            if(aba === 'gestao') document.getElementById('abaGestaoDono').classList.add('active');
+            if(aba === 'perfil') document.getElementById('abaPerfil').classList.add('active');
+            el.classList.add('active');
+        }
+
+        // =======================================================
+        // LÓGICA DO GESTOR / DONO DA OBRA
+        // =======================================================
+        let trabEditandoIdGlobal = null;
+        let obraEditandoIdGlobal = null;
+
+        function toggleFormCriarObraDono() {
+            obraEditandoIdGlobal = null;
+            document.getElementById('tituloObraDonoForm').innerText = '🛠️ Configurar Novo Canteiro e Equipa';
+            document.getElementById('btnSalvarObraDonoText').innerText = 'Criar Obra Completa';
+            document.getElementById('donoNovaObraNome').value = '';
+            document.getElementById('donoNovaObraDias').value = '';
+            document.getElementById('donoObraIndeterminado').checked = false;
+            document.getElementById('donoNovaObraDias').disabled = false;
+            document.getElementById('secaoCargosCriacao').style.display = 'block';
+
+            const form = document.getElementById('formCriarObraDono');
+            if(form.style.display === 'none' || !form.style.display) {
+                form.style.display = 'block'; form.classList.add('animate-fade');
+                document.getElementById('donoCargosContainer').innerHTML = '';
+                adicionarLinhaCargo(); 
+            } else form.style.display = 'none';
+        }
+
+        function abrirFormEditarObraDono(obraId) {
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === obraId);
+            if(!obra) return;
+
+            obraEditandoIdGlobal = obraId;
+            document.getElementById('tituloObraDonoForm').innerText = '✏️ Editar Obra';
+            document.getElementById('btnSalvarObraDonoText').innerText = 'Salvar Alterações';
+            document.getElementById('donoNovaObraNome').value = obra.nome;
+            
+            if(obra.dias === 'Indeterminado') {
+                document.getElementById('donoObraIndeterminado').checked = true;
+                document.getElementById('donoNovaObraDias').value = '';
+                document.getElementById('donoNovaObraDias').disabled = true;
+            } else {
+                document.getElementById('donoObraIndeterminado').checked = false;
+                document.getElementById('donoNovaObraDias').value = obra.dias;
+                document.getElementById('donoNovaObraDias').disabled = false;
+            }
+
+            document.getElementById('secaoCargosCriacao').style.display = 'none';
+
+            const form = document.getElementById('formCriarObraDono');
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleDiasDono() {
+            const isIndet = document.getElementById('donoObraIndeterminado').checked;
+            const inputDias = document.getElementById('donoNovaObraDias');
+            inputDias.disabled = isIndet;
+            if(isIndet) inputDias.value = '';
+        }
+
+        function adicionarLinhaCargo() {
+            const container = document.getElementById('donoCargosContainer');
+            const idRow = 'cargo_' + Date.now();
+            const div = document.createElement('div');
+            div.className = 'cargo-row'; div.id = idRow;
+            div.innerHTML = `
+                <div>
+                    <label style="font-size: 0.72rem; color: var(--text-sub); display: block; margin-bottom: 2px;">Função</label>
+                    <select class="donoSelectFuncao" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-container); color: var(--text-main); font-size: 0.85rem;">
+                        <option value="Ajudante">Ajudante</option>
+                        <option value="Pedreiro">Pedreiro</option>
+                        <option value="Betoneiro">Betoneiro</option>
+                        <option value="Gesseiro">Gesseiro</option>
+                        <option value="Eletricista">Eletricista</option>
+                        <option value="Pintor">Pintor</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.72rem; color: var(--text-sub); display: block; margin-bottom: 2px;">Diária (R$)</label>
+                    <input type="text" class="donoInputDiaria" placeholder="Ex: 100" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-container); color: var(--text-main); font-size: 0.85rem;">
+                </div>
+                <div>
+                    <label style="font-size: 0.72rem; color: var(--text-sub); display: block; margin-bottom: 2px;">Nome do Ajudante/Profissional</label>
+                    <input type="text" class="donoInputNomeTrab" placeholder="Ex: João da Silva" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-container); color: var(--text-main); font-size: 0.85rem;">
+                </div>
+                <button onclick="removerLinhaCargo('${idRow}')" style="background: none; border: none; color: #DC2626; font-size: 1.2rem; cursor: pointer; padding-bottom: 4px;" title="Remover linha">🗑️</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removerLinhaCargo(idRow) { document.getElementById(idRow)?.remove(); }
+
+        function salvarObraDono() {
+            const nome = document.getElementById('donoNovaObraNome').value.trim();
+            const isIndet = document.getElementById('donoObraIndeterminado').checked;
+            const dias = isIndet ? 'Indeterminado' : document.getElementById('donoNovaObraDias').value.trim();
+
+            if(!nome) return alert('Digite o nome da obra.');
+            if(!isIndet && !dias) return alert('Defina a duração ou marque Indeterminado.');
+
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+
+            if(obraEditandoIdGlobal !== null) {
+                obras = obras.map(o => o.id === obraEditandoIdGlobal ? { ...o, nome, dias } : o);
+                localStorage.setItem('obrasDono', JSON.stringify(obras));
+                mostrarSucesso('Obra atualizada com sucesso!');
+            } else {
+                const trabalhadores = [];
+                document.querySelectorAll('.cargo-row').forEach(linha => {
+                    const funcao = linha.querySelector('.donoSelectFuncao').value;
+                    const diaria = linha.querySelector('.donoInputDiaria').value.trim() || 'A combinar';
+                    const nomeTrab = linha.querySelector('.donoInputNomeTrab').value.trim();
+                    
+                    if(nomeTrab) {
+                        trabalhadores.push({
+                            id: Date.now() + Math.floor(Math.random() * 10000),
+                            nome: nomeTrab,
+                            funcao: funcao,
+                            diaria: diaria,
+                            vinculado: false,
+                            relatorios: [
+                                { data: '06 de Outubro', horas: '08:00:00', oquefez: `Registo inicial cadastrado na criação da obra (${funcao}).` }
+                            ]
+                        });
+                    }
+                });
+
+                const codigoConvite = 'BP-' + Math.floor(1000 + Math.random() * 9000);
+                obras.push({ id: Date.now(), codigoConvite, nome, dias, trabalhadores });
+                localStorage.setItem('obrasDono', JSON.stringify(obras));
+                mostrarSucesso('Obra criada com sucesso!');
+            }
+
+            document.getElementById('formCriarObraDono').style.display = 'none';
+            renderizarObrasDono();
+        }
+
+        function renderizarObrasDono() {
+            const container = document.getElementById('listaObrasDonoContainer');
+            const obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+
+            if(obras.length === 0) {
+                container.innerHTML = `<div class="card" style="text-align: center; padding: 30px;"><p style="color: var(--text-sub); font-size: 0.95rem;">Nenhum canteiro registado.</p></div>`;
+                return;
+            }
+
+            let html = '';
+            obras.forEach(obra => {
+                let gruposHtml = '';
+                const agrupados = {};
+                
+                let trabaOrdenados = [...obra.trabalhadores].sort((a, b) => a.nome.localeCompare(b.nome));
+                trabaOrdenados.forEach(t => { if(!agrupados[t.funcao]) agrupados[t.funcao] = []; agrupados[t.funcao].push(t); });
+
+                if(Object.keys(agrupados).length === 0) {
+                    gruposHtml = `<p style="font-size: 0.8rem; color: var(--text-sub); font-style: italic;">Nenhum trabalhador registado ainda.</p>`;
+                } else {
+                    for(const func in agrupados) {
+                        gruposHtml += `<div style="margin-bottom: 14px;">
+                            <h5 style="font-size: 0.85rem; color: var(--primary); margin-bottom: 8px; border-bottom: 1px solid rgba(255,122,0,0.2); padding-bottom: 4px; text-transform: uppercase;">${func}</h5>
+                            <div>
+                                ${agrupados[func].map(t => `
+                                    <div class="trab-item">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <strong style="font-size: 0.95rem; color: var(--text-main);">👷 ${t.nome} ${t.vinculado ? '<span title="Sincronizado via Convite" style="font-size:0.8rem;">🔗</span>' : ''}</strong>
+                                            <span style="font-size: 0.75rem; color: var(--text-sub);">Diária: R$ ${t.diaria || 'A combinar'}</span>
+                                        </div>
+                                        <div class="trab-actions">
+                                            <button onclick="editarTrabalhador(${obra.id},${t.id})" style="background:none; border:none; color: var(--primary); font-size: 0.8rem; cursor: pointer; font-weight: 600;">✏️ Editar</button>
+                                            <button onclick="verRelatoriosTrabalhador(${obra.id},${t.id})" style="background:none; border:none; color: #0284C7; font-size: 0.8rem; cursor: pointer; font-weight: 600;">📊 Relatórios</button>
+                                            <button onclick="excluirTrabalhador(${obra.id},${t.id})" style="background:none; border:none; color: #DC2626; font-size: 0.8rem; cursor: pointer; font-weight: 600;">🗑️ Remover</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                    }
+                }
+
+                const idFormAdd = `formAddTrab_${obra.id}`;
+
+                html += `
+                    <div class="card" style="border-left: 5px solid #1E293B; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <h3 style="font-size: 1.1rem; color: var(--text-main);">🏗️ ${obra.nome}</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="abrirFormEditarObraDono(${obra.id})" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.8rem; font-weight: 600;">✏️ Editar Obra</button>
+                                <button onclick="removerObraDono(${obra.id})" style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Excluir</button>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px;">⏳ <strong>Duração:</strong> ${obra.dias} dias</p>
+                        
+                        <div style="background: rgba(255,122,0,0.08); border: 1px dashed var(--primary); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; color: var(--text-main);">Código Convite: <strong style="color: var(--primary); font-size: 1.05rem; letter-spacing: 1px;">${obra.codigoConvite}</strong></span>
+                            <button onclick="copiarCodigo('${obra.codigoConvite}')" class="btn-outline" style="padding: 6px 10px; font-size: 0.75rem; border-color: var(--primary); color: var(--primary);">📋 Copiar</button>
+                        </div>
+
+                        <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 8px;">Equipa Organizada (Separada por Função)</h4>
+                        <div style="background: var(--bg-container); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                            ${gruposHtml}
+                        </div>
+
+                        <button class="btn-outline" onclick="abrirFormAdicionarTrab(${obra.id})" style="width: auto; padding: 6px 12px; font-size: 0.8rem; color: #166534; border-color: #166534;">+ Adicionar Novo Trabalhador</button>
+
+                        <div id="${idFormAdd}" style="display: none; margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.02); border-radius: 8px; border: 1px dashed var(--card-border);">
+                            <h4 id="tituloAddTrab_${obra.id}" style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-main);">Adicionar Novo</h4>
+                            <div class="input-group" style="margin-bottom: 8px;">
+                                <input type="text" id="nomeTrab_${obra.id}" placeholder="Nome do Trabalhador" style="padding: 10px; font-size: 0.85rem;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                                <select id="funcTrab_${obra.id}" style="padding: 10px; font-size: 0.85rem;">
+                                    <option value="Ajudante">Ajudante</option>
+                                    <option value="Pedreiro">Pedreiro</option>
+                                    <option value="Betoneiro">Betoneiro</option>
+                                    <option value="Gesseiro">Gesseiro</option>
+                                    <option value="Eletricista">Eletricista</option>
+                                    <option value="Pintor">Pintor</option>
+                                </select>
+                                <input type="text" id="diariaTrab_${obra.id}" placeholder="Diária R$" style="padding: 10px; font-size: 0.85rem;">
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="salvarTrabalhadorDono(${obra.id})" class="btn-orange" style="padding: 8px; font-size: 0.85rem; border-radius: 8px;">Salvar na Equipa</button>
+                                <button onclick="fecharFormAddTrab(${obra.id})" class="btn-outline" style="padding: 8px; font-size: 0.85rem; border-radius: 8px;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function removerObraDono(id) {
+            if(confirm('Tem certeza que deseja excluir esta obra?')) {
+                let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+                obras = obras.filter(o => o.id !== id);
+                localStorage.setItem('obrasDono', JSON.stringify(obras)); 
+                renderizarObrasDono();
+                mostrarSucesso('Obra excluída com sucesso!');
+            }
+        }
+
+        function abrirFormAdicionarTrab(obraId) {
+            trabEditandoIdGlobal = null;
+            document.getElementById(`tituloAddTrab_${obraId}`).innerText = 'Adicionar Trabalhador';
+            document.getElementById(`nomeTrab_${obraId}`).value = '';
+            document.getElementById(`diariaTrab_${obraId}`).value = '';
+            document.getElementById(`formAddTrab_${obraId}`).style.display = 'block';
+        }
+        function fecharFormAddTrab(obraId) { document.getElementById(`formAddTrab_${obraId}`).style.display = 'none'; trabEditandoIdGlobal = null; }
+
+        function editarTrabalhador(obraId, trabId) {
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === obraId);
+            let trab = obra.trabalhadores.find(t => t.id === trabId);
+            trabEditandoIdGlobal = trabId;
+            document.getElementById(`tituloAddTrab_${obraId}`).innerText = '✏️ Editar Trabalhador';
+            document.getElementById(`nomeTrab_${obraId}`).value = trab.nome;
+            document.getElementById(`funcTrab_${obraId}`).value = trab.funcao;
+            document.getElementById(`diariaTrab_${obraId}`).value = trab.diaria || '';
+            document.getElementById(`formAddTrab_${obraId}`).style.display = 'block';
+        }
+
+        function excluirTrabalhador(obraId, trabId) {
+            if(confirm('Remover este trabalhador?')) {
+                let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+                let obra = obras.find(o => o.id === obraId);
+                obra.trabalhadores = obra.trabalhadores.filter(t => t.id !== trabId);
+                localStorage.setItem('obrasDono', JSON.stringify(obras)); 
+                renderizarObrasDono();
+                mostrarSucesso('Trabalhador removido com sucesso!');
+            }
+        }
+
+        function salvarTrabalhadorDono(obraId) {
+            const nome = document.getElementById(`nomeTrab_${obraId}`).value.trim();
+            const funcao = document.getElementById(`funcTrab_${obraId}`).value;
+            const diaria = document.getElementById(`diariaTrab_${obraId}`).value.trim() || 'A combinar';
+            if(!nome) return alert('Digite o nome do trabalhador.');
+
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === obraId);
+
+            if(trabEditandoIdGlobal) {
+                obra.trabalhadores = obra.trabalhadores.map(t => t.id === trabEditandoIdGlobal ? { ...t, nome, funcao, diaria } : t);
+                mostrarSucesso('Trabalhador atualizado com sucesso!');
+            } else {
+                obra.trabalhadores.push({ id: Date.now(), nome, funcao, diaria, vinculado: false, relatorios: [] });
+                mostrarSucesso('Trabalhador adicionado com sucesso!');
+            }
+            localStorage.setItem('obrasDono', JSON.stringify(obras));
+            fecharFormAddTrab(obraId); 
+            renderizarObrasDono();
+        }
+
+        // =======================================================
+        // RELATÓRIOS DO GESTOR & EDIÇÃO MANUAL
+        // =======================================================
+        let relatorioObraAtualId = null;
+        let relatorioTrabAtualId = null;
+
+        function verRelatoriosTrabalhador(obraId, trabId) {
+            relatorioObraAtualId = obraId;
+            relatorioTrabAtualId = trabId;
+
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === obraId);
+            let trab = obra.trabalhadores.find(t => t.id === trabId);
+
+            document.getElementById('viewGestaoLista').style.display = 'none';
+            document.getElementById('relatorioNomeTrab').innerText = trab.nome;
+            document.getElementById('relatorioFuncaoTrab').innerText = `Função: ${trab.funcao} | Diária: R$ ${trab.diaria} | Obra: ${obra.nome}`;
+            document.getElementById('relatorioBadgeVinculo').style.display = trab.vinculado ? 'block' : 'none';
+
+            const cardFormManual = document.getElementById('cardFormRelatorioManual');
+            cardFormManual.style.display = trab.vinculado ? 'none' : 'block';
+
+            limparFormRelatorioManual();
+            renderizarListaRelatorios(trab);
+
+            document.getElementById('viewGestaoRelatorios').style.display = 'block';
+        }
+
+        function renderizarListaRelatorios(trab) {
+            const container = document.getElementById('listaRelatoriosContainer');
+            if(!trab.relatorios || trab.relatorios.length === 0) {
+                container.innerHTML = `<div class="card" style="text-align: center; padding: 20px;"><p style="color: var(--text-sub);">Nenhum relatório registado.</p></div>`;
+                return;
+            }
+
+            let html = '';
+            trab.relatorios.forEach((rel, index) => {
+                const badgeVinculo = trab.vinculado ? `<span style="font-size:0.75rem; color:#166534; font-weight:600;">(Automático via App)</span>` : '';
+                const btnEditarManual = !trab.vinculado ? `<button onclick="prepararEditarRelatorioManual(${index})" style="background:none; border:none; color:var(--primary); font-size:0.8rem; cursor:pointer; font-weight:600;">✏️ Editar</button>` : '';
+                
+                html += `
+                    <div class="card" style="margin-bottom: 12px; padding: 14px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">📅 ${rel.data} ${badgeVinculo}</span>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: #166534; background: rgba(22, 101, 52, 0.1); padding: 4px 8px; border-radius: 8px;">⏱️ ${rel.horas}</span>
+                                ${btnEditarManual}
+                            </div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5; background: rgba(0,0,0,0.02); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">📝 <strong>Relatório:</strong><br>${rel.oquefez}</p>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function limparFormRelatorioManual() {
+            document.getElementById('editRelatorioIndex').value = '-1';
+            document.getElementById('inputRelData').value = '';
+            document.getElementById('inputRelHoras').value = '08:00:00';
+            document.getElementById('inputRelOquefez').value = '';
+            document.getElementById('tituloFormRelatorioManual').innerText = '➕ Adicionar Relatório Manual';
+        }
+
+        function prepararEditarRelatorioManual(index) {
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === relatorioObraAtualId);
+            let trab = obra.trabalhadores.find(t => t.id === relatorioTrabAtualId);
+            let rel = trab.relatorios[index];
+
+            document.getElementById('editRelatorioIndex').value = index;
+            document.getElementById('inputRelData').value = rel.data;
+            document.getElementById('inputRelHoras').value = rel.horas;
+            document.getElementById('inputRelOquefez').value = rel.oquefez;
+            document.getElementById('tituloFormRelatorioManual').innerText = '✏️ Editar Relatório Manual';
+            
+            document.getElementById('cardFormRelatorioManual').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function salvarRelatorioManual() {
+            const data = document.getElementById('inputRelData').value.trim();
+            const horas = document.getElementById('inputRelHoras').value.trim();
+            const oquefez = document.getElementById('inputRelOquefez').value.trim();
+            const index = parseInt(document.getElementById('editRelatorioIndex').value);
+
+            if(!data || !horas || !oquefez) return alert('Preencha todos os campos do relatório.');
+
+            let obras = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obra = obras.find(o => o.id === relatorioObraAtualId);
+            let trab = obra.trabalhadores.find(t => t.id === relatorioTrabAtualId);
+
+            if(index >= 0) {
+                trab.relatorios[index] = { data, horas, oquefez };
+                mostrarSucesso('Relatório atualizado com sucesso!');
+            } else {
+                trab.relatorios.push({ data, horas, oquefez });
+                mostrarSucesso('Relatório manual adicionado com sucesso!');
+            }
+
+            localStorage.setItem('obrasDono', JSON.stringify(obras));
+            limparFormRelatorioManual();
+            renderizarListaRelatorios(trab);
+        }
+
+        function fecharRelatorios() { document.getElementById('viewGestaoRelatorios').style.display = 'none'; document.getElementById('viewGestaoLista').style.display = 'block'; }
+
+
+        // =======================================================
+        // OBRAS TRABALHADOR E VÍNCULO VIA CONVITE
+        // =======================================================
+        function toggleFormConvite() {
+            const form = document.getElementById('formConviteCard');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if(form.style.display === 'block') document.getElementById('formCriarObraCard').style.display = 'none';
+        }
+
+        function entrarComConvite() {
+            const codigo = document.getElementById('inputCodigoConvite').value.trim().toUpperCase();
+            if(!codigo) return alert('Digite o código do convite fornecido pelo Dono da Obra.');
+            
+            let obrasDono = JSON.parse(localStorage.getItem('obrasDono')) || [];
+            let obraDono = obrasDono.find(o => o.codigoConvite === codigo);
+            if(!obraDono) return alert('Código inválido ou obra não encontrada.');
+            
+            let minhasObras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+            if(minhasObras.find(o => o.codigoConvite === codigo)) return alert('Você já está vinculado a esta obra!');
+            
+            minhasObras.push({
+                id: Date.now(), nome: obraDono.nome, dias: 0, diasPagos: 0, diaria: 0, 
+                horario: 'A definir', oquefez: 'Vinculado via Convite.', vinculado: true, codigoConvite: codigo
+            });
+            localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(minhasObras));
+            
+            let trabExistente = obraDono.trabalhadores.find(t => t.id === dadosSalvos.id);
+            if(!trabExistente) {
+                obraDono.trabalhadores.push({
+                    id: dadosSalvos.id, nome: dadosSalvos.nome || 'Trabalhador Convidado',
+                    funcao: dadosSalvos.funcao || 'Ajudante', diaria: 'A combinar', vinculado: true, relatorios: []
+                });
+                localStorage.setItem('obrasDono', JSON.stringify(obrasDono));
+            }
+            
+            mostrarSucesso('Vinculado à Obra com Sucesso!');
+            toggleFormConvite(); 
+            renderizarListaObrasTrabalhador();
+        }
+
+        let obraTrabIdEdit = null;
+        function toggleFormCriarObra() { 
+            obraTrabIdEdit = null; 
+            document.getElementById('tituloFormObra').innerText = '🛠️ Registar Obra e Valores'; 
+            document.getElementById('novaObraNome').value = '';
+            document.getElementById('novaObraDias').value = '';
+            document.getElementById('novaObraDiasPagos').value = '0';
+            document.getElementById('novaObraDiaria').value = '';
+            document.getElementById('novaObraHorario').value = '';
+            document.getElementById('novaObraOQueFez').value = '';
+
+            const form = document.getElementById('formCriarObraCard');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none'; 
+            if(form.style.display === 'block') document.getElementById('formConviteCard').style.display = 'none';
+        }
+        function fecharFormObra() { document.getElementById('formCriarObraCard').style.display = 'none'; obraTrabIdEdit = null; }
+        
+        function abrirFormEditarTrabalhador(id) {
+            let minhasObras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+            let obra = minhasObras.find(o => o.id === id);
+            if(!obra) return;
+
+            obraTrabIdEdit = id;
+            document.getElementById('tituloFormObra').innerText = '✏️ Editar Obra';
+            document.getElementById('novaObraNome').value = obra.nome;
+            document.getElementById('novaObraDias').value = obra.dias;
+            document.getElementById('novaObraDiasPagos').value = obra.diasPagos || 0;
+            document.getElementById('novaObraDiaria').value = obra.diaria;
+            document.getElementById('novaObraHorario').value = obra.horario || '';
+            document.getElementById('novaObraOQueFez').value = obra.oquefez || '';
+
+            const form = document.getElementById('formCriarObraCard');
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function salvarNovaObra() {
+            const nome = document.getElementById('novaObraNome').value.trim(); 
+            const dias = parseInt(document.getElementById('novaObraDias').value)||0; 
+            const diasPagos = parseInt(document.getElementById('novaObraDiasPagos').value)||0;
+            const diaria = parseFloat(document.getElementById('novaObraDiaria').value)||0;
+            const horario = document.getElementById('novaObraHorario').value.trim();
+            const oquefez = document.getElementById('novaObraOQueFez').value.trim();
+
+            if(!nome) return alert('Preencha o nome da obra.');
+
+            let obras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador'))||[];
+            if(obraTrabIdEdit) {
+                obras = obras.map(o => o.id === obraTrabIdEdit ? { ...o, nome, dias, diasPagos, diaria, horario, oquefez } : o);
+                mostrarSucesso('Obra atualizada com sucesso!');
+            } else {
+                obras.push({ id: Date.now(), nome, dias, diasPagos, diaria, horario, oquefez, vinculado: false });
+                mostrarSucesso('Obra registada com sucesso!');
+            }
+            localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(obras)); 
+            fecharFormObra(); 
+            renderizarListaObrasTrabalhador();
+        }
+
+        function renderizarListaObrasTrabalhador() {
+            const cont = document.getElementById('listaObrasContainer'); if(!cont) return;
+            const obras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador'))||[];
+            if(obras.length === 0) { 
+                cont.innerHTML = `<div class="card" style="text-align: center; padding: 30px;"><p style="color: var(--text-sub);">Nenhuma obra registada.</p></div>`; 
+                return; 
+            }
+            
+            let html = ''; obras.forEach(o => { 
+                const totalGanho = (o.dias || 0) * (o.diaria || 0);
+                const totalPago = (o.diasPagos || 0) * (o.diaria || 0);
+                const aReceber = totalGanho - totalPago;
+                const fmtMoeda = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                html += `
+                    <div class="card" style="border-left: 5px solid var(--primary); margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <h3 style="font-size: 1.1rem; color: var(--text-main);">🏗️ ${o.nome} ${o.vinculado ? '<span style="font-size:0.8rem;" title="Sincronizado">🔗</span>' : ''}</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="abrirFormEditarTrabalhador(${o.id})" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.85rem; font-weight: 600;">✏️ Editar</button>
+                                <button onclick="removerObraTrabalhador(${o.id})" style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 0.85rem; font-weight: 600;">🗑️ Excluir</button>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; font-size: 0.85rem; color: var(--text-sub);">
+                            <p>📅 <strong>Trabalhados:</strong> ${o.dias || 0} dias</p>
+                            <p>✅ <strong>Diárias Pagas:</strong> ${o.diasPagos || 0} dias</p>
+                            <p>💰 <strong>Valor Diária:</strong> ${fmtMoeda(o.diaria || 0)}</p>
+                            <p>⏰ <strong>Horário:</strong> ${o.horario || 'N/D'}</p>
+                        </div>
+
+                        <div style="background: var(--bg-container); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <span style="font-size: 0.75rem; color: var(--text-sub); display: block;">TOTAL A RECEBER</span>
+                                <strong style="font-size: 1.2rem; color: #166534;">${fmtMoeda(aReceber)}</strong>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; width: 150px;">
+                                <button onclick="adicionarDiaTrabalhado(${o.id})" class="btn-outline" style="width: 100%; padding: 6px 10px; font-size: 0.75rem; color: var(--primary); border-color: var(--primary);">+1 Dia Trabalhado</button>
+                                <button onclick="adicionarDiariaPaga(${o.id})" class="btn-outline" style="width: 100%; padding: 6px 10px; font-size: 0.75rem;">+1 Diária Paga</button>
+                            </div>
+                        </div>
+
+                        ${o.oquefez ? `<p style="font-size: 0.85rem; color: var(--text-sub); background: rgba(0,0,0,0.03); padding: 8px; border-radius: 8px;">📝 <strong>Atividades:</strong> ${o.oquefez}</p>` : ''}
+                    </div>`; 
+            });
+            cont.innerHTML = html;
+        }
+
+        function adicionarDiaTrabalhado(id) {
+            let obras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+            obras = obras.map(o => { if(o.id === id) o.dias = (o.dias || 0) + 1; return o; });
+            localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(obras)); 
+            renderizarListaObrasTrabalhador();
+            mostrarSucesso('Dia trabalhado adicionado com sucesso!');
+        }
+
+        function adicionarDiariaPaga(id) {
+            let obras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+            obras = obras.map(o => { 
+                if(o.id === id) {
+                    if((o.diasPagos || 0) < (o.dias || 0)) {
+                        o.diasPagos = (o.diasPagos || 0) + 1;
+                        mostrarSucesso('Diária paga registada com sucesso!');
+                    } else {
+                        alert('Todas as diárias trabalhadas já constam como pagas!');
+                    }
+                }
+                return o; 
+            });
+            localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(obras)); 
+            renderizarListaObrasTrabalhador();
+        }
+
+        function removerObraTrabalhador(id) {
+            if(confirm('Excluir esta obra da sua lista?')) {
+                let obras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+                obras = obras.filter(o => o.id !== id);
+                localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(obras)); 
+                renderizarListaObrasTrabalhador();
+                mostrarSucesso('Obra removida com sucesso!');
+            }
+        }
+
+        // =======================================================
+        // BATER PONTO E SINCRONIZAÇÃO
+        // =======================================================
+        function abrirFormularioChegada() { 
+            const selectObra = document.getElementById('inputObraPonto');
+            if(selectObra) {
+                let minhasObras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+                selectObra.innerHTML = '<option value="">Ponto Avulso (Não vincular a obra)</option>';
+                minhasObras.forEach(o => {
+                    selectObra.innerHTML += `<option value="${o.id}">${o.nome} ${o.vinculado ? '(Sincronizado)' : ''}</option>`;
+                });
+            }
+            document.getElementById('viewBotaoPonto').style.display = 'none'; 
+            document.getElementById('viewFormChegada').style.display = 'block'; 
+        }
+
+        function voltarParaBotao() { document.getElementById('viewFormChegada').style.display = 'none'; document.getElementById('viewBotaoPonto').style.display = 'block'; }
+        
+        function confirmarIniciarPonto() {
+            const h = document.getElementById('inputHoraChegada').value, f = document.getElementById('inputFuncaoChegada').value, a = document.getElementById('inputAcompanhante').value;
+            if(!h || !a) return alert('Preencha os campos!');
+            
+            const sel = document.getElementById('inputObraPonto');
+            obraAtualPontoId = sel.value ? parseInt(sel.value) : null;
+            document.getElementById('txtObraCard').innerText = sel.options[sel.selectedIndex].text;
+
+            document.getElementById('txtChegada').innerText = h; document.getElementById('txtAcomp').innerText = a; document.getElementById('txtFuncaoCard').innerText = f;
+            dadosSalvos.funcao = f; localStorage.setItem('dadosPerfil', JSON.stringify(dadosSalvos));
+
+            document.getElementById('viewFormChegada').style.display = 'none'; document.getElementById('viewPontoAtivo').style.display = 'block';
+            segundos = 0; timerInterval = setInterval(() => { segundos++; document.getElementById('cronometro').innerText = `${String(Math.floor(segundos/3600)).padStart(2,'0')}:${String(Math.floor((segundos%3600)/60)).padStart(2,'0')}:${String(segundos%60).padStart(2,'0')}`; }, 1000);
+        }
+
+        function abrirFormularioEncerramento() { document.getElementById('viewPontoAtivo').style.display = 'none'; document.getElementById('viewFormEncerramento').style.display = 'block'; }
+        
+        function finalizarPontoDefinitivo() { 
+            clearInterval(timerInterval); 
+            const relatorioText = document.getElementById('inputRelatorio').value.trim() || 'Sem descrição.';
+            const horasTrab = document.getElementById('cronometro').innerText;
+            const dataHoje = document.getElementById('dataAtual').innerText;
+
+            if (obraAtualPontoId) {
+                let minhasObras = JSON.parse(localStorage.getItem('minhasObrasTrabalhador')) || [];
+                let minhaObra = minhasObras.find(o => o.id === obraAtualPontoId);
+                
+                if (minhaObra && minhaObra.vinculado) {
+                    let obrasDono = JSON.parse(localStorage.getItem('obrasDono')) || [];
+                    let obraDono = obrasDono.find(o => o.codigoConvite === minhaObra.codigoConvite);
+                    
+                    if (obraDono) {
+                        let trab = obraDono.trabalhadores.find(t => t.id === dadosSalvos.id);
+                        if (trab) {
+                            trab.relatorios.push({ data: dataHoje, horas: horasTrab, oquefez: relatorioText });
+                            localStorage.setItem('obrasDono', JSON.stringify(obrasDono));
+                        }
+                    }
+                    minhaObra.dias = (minhaObra.dias || 0) + 1;
+                    localStorage.setItem('minhasObrasTrabalhador', JSON.stringify(minhasObras));
+                }
+            }
+
+            document.getElementById('viewFormEncerramento').style.display = 'none'; 
+            document.getElementById('resumoTempoTotal').innerText = horasTrab; 
+            document.getElementById('viewPontoEncerrado').style.display = 'block'; 
+            mostrarSucesso('Ponto encerrado e relatório enviado com sucesso!');
+        }
+    </script>
+</body>
+</html>

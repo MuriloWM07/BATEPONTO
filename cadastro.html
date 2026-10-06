@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Criar Nova Conta</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" style="justify-content: center;">
+        
+        <div class="logo-container">
+            <img src="log.png" alt="Logo Bate Ponto">
+            <h1>Bate Ponto</h1>
+            <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 6px;">Crie a sua conta para começar</p>
+        </div>
+        
+        <div class="card" style="margin-top: 10px;">
+            <div class="input-group">
+                <label>Nome Completo</label>
+                <input type="text" id="cadNome" placeholder="Seu nome">
+            </div>
+            <div class="input-group">
+                <label>E-mail ou Utilizador</label>
+                <input type="text" id="cadEmail" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="cadSenha" placeholder="••••••••">
+            </div>
+            
+            <button class="btn-orange" onclick="fazerCadastro()">REGISTRAR E CONTINUAR</button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <p style="color: var(--text-sub); font-size: 0.9rem;">Já tem uma conta?</p>
+            <button class="btn-outline" onclick="window.location.href='login.html'" style="margin-top: 8px;">Fazer Login</button>
+        </div>
+
+    </div>
+
+    <script>
+        if(localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        function fazerCadastro() {
+            const nome = document.getElementById('cadNome').value.trim();
+            const email = document.getElementById('cadEmail').value.trim();
+            const senha = document.getElementById('cadSenha').value.trim();
+
+            if(!nome || !email || !senha) {
+                alert('Preencha todos os campos para se registar.');
+                return;
+            }
+
+            // Guarda os dados básicos e direciona para a tela de escolha de perfil (Dono vs Trabalhador)
+            localStorage.setItem('usuarioLogado', nome);
+            window.location.href = 'perfil.html';
+        }
+    </script>
+</body>
+</html>

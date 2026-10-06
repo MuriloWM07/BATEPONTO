@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Iniciar Sessão</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" style="justify-content: center;">
+        
+        <!-- Logo Real -->
+        <div class="logo-container">
+            <img src="log.png" alt="Logo Bate Ponto">
+            <h1>Bate Ponto</h1>
+            <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 6px;">Gestão Inteligente de Canteiros de Obras</p>
+        </div>
+        
+        <div class="card" style="margin-top: 10px;">
+            <div class="input-group">
+                <label>Utilizador ou E-mail</label>
+                <input type="text" id="identificador" placeholder="Digite o seu registo">
+            </div>
+            <div class="input-group">
+                <label>Senha de Acesso</label>
+                <input type="password" id="senha" placeholder="••••••••">
+            </div>
+            
+            <button class="btn-orange" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <p style="color: var(--text-sub); font-size: 0.9rem;">Ainda não tem uma conta?</p>
+            <button class="btn-outline" onclick="window.location.href='cadastro.html'" style="margin-top: 8px;">Criar Nova Conta</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Carrega o tema escuro/claro salvo
+        if(localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        async function fazerLogin() {
+            const id = document.getElementById('identificador').value.trim();
+            const pass = document.getElementById('senha').value.trim();
+            
+            if(!id || !pass) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identificador: id, senha: pass })
+                });
+                
+                if(res.ok) {
+                    localStorage.setItem('usuarioLogado', id);
+                    // Como já tem conta, vai DIRETO para o app principal
+                    window.location.href = 'app.html'; 
+                } else {
+                    alert('Dados incorretos ou utilizador não encontrado.');
+                }
+            } catch (erro) {
+                // Modo protótipo: se o servidor offline não estiver ativo, avança direto para o app
+                localStorage.setItem('usuarioLogado', id);
+                window.location.href = 'app.html';
+            }
+        }
+    </script>
+</body>
+</html>

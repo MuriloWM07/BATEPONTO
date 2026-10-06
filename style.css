@@ -1,0 +1,252 @@
+/* ========================================================== */
+/* FICHEIRO: style.css - Web Dashboard Moderno & Temas        */
+/* ========================================================== */
+
+:root {
+    --bg-body: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    --bg-container: #FFFFFF;
+    --text-main: #0F172A;
+    --text-sub: #64748B;
+    --card-bg: #F8FAFC;
+    --card-border: #E2E8F0;
+    --primary: #FF7A00;
+    --primary-hover: #e56d00;
+}
+
+body.dark-mode {
+    --bg-body: linear-gradient(135deg, #020617 0%, #0F172A 100%);
+    --bg-container: #1E293B;
+    --text-main: #F8FAFC;
+    --text-sub: #94A3B8;
+    --card-bg: #0F172A;
+    --card-border: #334155;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+}
+
+body { 
+    background: var(--bg-body);
+    color: var(--text-main);
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    padding: 24px;
+    transition: background 0.3s ease;
+}
+
+/* Caixa Espaçosa e Moderna para Web/Desktop */
+.app-container { 
+    width: 100%; 
+    max-width: 780px; 
+    min-height: 620px;
+    background: var(--bg-container); 
+    color: var(--text-main);
+    position: relative; 
+    padding: 36px; 
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+    border-radius: 28px;
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid var(--card-border);
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Scrollbar elegante */
+.app-container::-webkit-scrollbar { width: 8px; }
+.app-container::-webkit-scrollbar-thumb { background: var(--text-sub); border-radius: 10px; opacity: 0.5; }
+
+/* Logo Unificada */
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.logo-container img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
+
+.logo-container h1 {
+    color: var(--text-main);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* Cartões */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 18px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Inputs */
+.input-group { 
+    margin-bottom: 18px; 
+    width: 100%;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+}
+
+.input-group input, .input-group select, .input-group textarea { 
+    width: 100%; 
+    padding: 14px 18px; 
+    border: 1.5px solid var(--card-border); 
+    border-radius: 14px; 
+    font-size: 1rem; 
+    background: var(--bg-container);
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.15);
+}
+
+/* Botões */
+.btn-orange { 
+    width: 100%; 
+    background: var(--primary); 
+    color: white; 
+    padding: 16px; 
+    border: none; 
+    border-radius: 14px; 
+    font-size: 1.05rem; 
+    font-weight: 700; 
+    cursor: pointer; 
+    box-shadow: 0 8px 20px rgba(255, 122, 0, 0.25);
+    transition: transform 0.1s, background 0.2s;
+}
+
+.btn-orange:active { transform: scale(0.98); }
+.btn-orange:hover { background: var(--primary-hover); }
+
+.btn-outline { 
+    width: 100%; 
+    background: var(--bg-container); 
+    color: var(--text-main); 
+    padding: 14px; 
+    border: 2px solid var(--card-border); 
+    border-radius: 14px; 
+    font-size: 1rem; 
+    font-weight: 600; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-outline:hover {
+    border-color: var(--primary);
+    background: rgba(255, 122, 0, 0.05);
+}
+
+/* Grelha de Opções */
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.option-chip {
+    padding: 16px;
+    border: 1.5px solid var(--card-border);
+    border-radius: 14px;
+    background: var(--bg-container);
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.option-chip.selected {
+    border-color: var(--primary);
+    background: rgba(255, 122, 0, 0.08);
+    color: var(--primary);
+}
+
+/* Navegação Inferior */
+.bottom-nav { 
+    position: sticky;
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    background: var(--bg-container); 
+    display: flex; 
+    justify-content: space-around; 
+    padding: 14px 0 10px 0; 
+    border-top: 1px solid var(--card-border); 
+    margin-top: auto;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.nav-item { 
+    text-align: center; 
+    color: var(--text-sub); 
+    cursor: pointer; 
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: none;
+    border: none;
+    flex: 1;
+    transition: color 0.2s;
+}
+
+.nav-item.active { 
+    color: var(--primary); 
+    font-weight: 700; 
+}
+
+.nav-item span {
+    font-size: 1.3rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+    animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 600px) {
+    body { padding: 0; }
+    .app-container { max-width: 100%; min-height: 100vh; border-radius: 0; border: none; padding: 20px; }
+    .options-grid { grid-template-columns: repeat(2, 1fr); }
+    .bottom-nav { border-radius: 0; }
+}

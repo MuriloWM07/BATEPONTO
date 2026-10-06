@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Configurar Perfil (Trabalhador)</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Animações fluidas de transição entre perguntas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-chip {
+            padding: 14px;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 12px;
+            background: white;
+            text-align: center;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-chip.selected {
+            border-color: #FF7A00;
+            background: #FFF7ED;
+            color: #FF7A00;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div>
+            <!-- Logo Real (log.png) -->
+            <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 15px;">
+                <img src="log.png" alt="Logo Bate Ponto" style="width: 55px; height: 55px; object-fit: contain;">
+                <h1 style="font-size: 1.2rem; margin-top: 4px; color: #001F3F;">Bate Ponto</h1>
+            </div>
+
+            <!-- Barra de Progresso Dinâmica -->
+            <div style="background: #E2E8F0; border-radius: 8px; height: 6px; margin-bottom: 24px; overflow: hidden;">
+                <div id="progressBarTrab" style="width: 16%; background: #FF7A00; height: 100%; transition: width 0.3s ease;"></div>
+            </div>
+
+            <!-- Conteúdo das 5 Perguntas + Revisão -->
+            <div id="stepContainerTrab" class="animate-fade">
+                <!-- Injeta via JavaScript -->
+            </div>
+        </div>
+
+        <div id="btnContainerTrab" style="margin-top: 20px;">
+            <button class="btn-orange" id="btnAvancarTrab" onclick="proximoPassoTrab()">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        let stepTrab = 1;
+        const dataTrab = { nome: '', obra: '', funcao: 'Pedreiro', diaria: '', dias: '' };
+        let funcaoSelecionada = 'Pedreiro';
+
+        function renderStepTrab() {
+            const container = document.getElementById('stepContainerTrab');
+            document.getElementById('progressBarTrab').style.width = `${(stepTrab / 6) * 100}%`;
+
+            container.classList.remove('animate-fade');
+            void container.offsetWidth;
+            container.classList.add('animate-fade');
+
+            if(stepTrab === 1) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">1. Qual é o seu nome?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Como prefere ser identificado pelos colegas na obra.</p>
+                    <div class="input-group">
+                        <input type="text" id="respT1" placeholder="Ex: João Silva" value="${dataTrab.nome}">
+                    </div>`;
+            } else if(stepTrab === 2) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">2. Qual é o nome da obra?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">O canteiro onde vai prestar serviço.</p>
+                    <div class="input-group">
+                        <input type="text" id="respT2" placeholder="Ex: Residencial Parque" value="${dataTrab.obra}">
+                    </div>`;
+            } else if(stepTrab === 3) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">3. Qual é a sua função?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Selecione a sua especialidade principal:</p>
+                    <div class="options-grid">
+                        <div class="option-chip ${funcaoSelecionada==='Ajudante'?'selected':''}" onclick="selecionarFuncao('Ajudante')">👷 Ajudante</div>
+                        <div class="option-chip ${funcaoSelecionada==='Pedreiro'?'selected':''}" onclick="selecionarFuncao('Pedreiro')">🧱 Pedreiro</div>
+                        <div class="option-chip ${funcaoSelecionada==='Gesseiro'?'selected':''}" onclick="selecionarFuncao('Gesseiro')">🏠 Gesseiro</div>
+                        <div class="option-chip ${funcaoSelecionada==='Eletricista'?'selected':''}" onclick="selecionarFuncao('Eletricista')">⚡ Eletricista</div>
+                        <div class="option-chip ${funcaoSelecionada==='Pintor'?'selected':''}" onclick="selecionarFuncao('Pintor')">🎨 Pintor</div>
+                        <div class="option-chip ${funcaoSelecionada==='Outro'?'selected':''}" onclick="selecionarFuncao('Outro')">🛠️ Outro</div>
+                    </div>`;
+            } else if(stepTrab === 4) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">4. Quanto é a sua diária?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Valor acordado por dia de trabalho.</p>
+                    <div class="input-group">
+                        <input type="text" id="respT4" placeholder="Ex: R$ 150,00" value="${dataTrab.diaria}">
+                    </div>`;
+            } else if(stepTrab === 5) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">5. Quantos dias de obra irá trabalhar?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Estimativa de duração da sua prestação de serviço.</p>
+                    <div class="input-group">
+                        <input type="text" id="respT5" placeholder="Ex: 60 dias" value="${dataTrab.dias}">
+                    </div>`;
+            } else if(stepTrab === 6) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 12px;">Revise as suas informações</h2>
+                    <div class="card" style="font-size: 0.95rem; color: #334155; line-height: 1.6; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: 14px;">
+                        <p style="margin-bottom: 6px;">👤 <strong>Nome:</strong> ${dataTrab.nome}</p>
+                        <p style="margin-bottom: 6px;">🏗️ <strong>Obra:</strong> ${dataTrab.obra}</p>
+                        <p style="margin-bottom: 6px;">🛠️ <strong>Função:</strong> ${dataTrab.funcao}</p>
+                        <p style="margin-bottom: 6px;">💰 <strong>Diária:</strong> ${dataTrab.diaria}</p>
+                        <p>📅 <strong>Dias de Obra:</strong> ${dataTrab.dias}</p>
+                    </div>`;
+                document.getElementById('btnAvancarTrab').innerText = "Confirmar e Entrar no App";
+            }
+        }
+
+        function selecionarFuncao(func) {
+            funcaoSelecionada = func;
+            renderStepTrab();
+        }
+
+        function proximoPassoTrab() {
+            if(stepTrab === 1) {
+                const val = document.getElementById('respT1').value.trim();
+                if(!val) return alert('Por favor, digite o seu nome.');
+                dataTrab.nome = val;
+            } else if(stepTrab === 2) {
+                const val = document.getElementById('respT2').value.trim();
+                if(!val) return alert('Por favor, digite o nome da obra.');
+                dataTrab.obra = val;
+            } else if(stepTrab === 3) {
+                dataTrab.funcao = funcaoSelecionada;
+            } else if(stepTrab === 4) {
+                const val = document.getElementById('respT4').value.trim();
+                if(!val) return alert('Por favor, digite o valor da sua diária.');
+                dataTrab.diaria = val;
+            } else if(stepTrab === 5) {
+                const val = document.getElementById('respT5').value.trim();
+                if(!val) return alert('Por favor, digite os dias de obra.');
+                dataTrab.dias = val;
+            } else if(stepTrab === 6) {
+                localStorage.setItem('tipoUsuario', 'trabalhador');
+                localStorage.setItem('dadosPerfil', JSON.stringify(dataTrab));
+                window.location.href = 'app.html';
+                return;
+            }
+            stepTrab++;
+            renderStepTrab();
+        }
+
+        renderStepTrab();
+    </script>
+</body>
+</html>

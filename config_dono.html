@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Bate Ponto - Criar Obra (Dono)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div>
+           <div class="logo-container">
+    <img src="log.png" alt="Logo Bate Ponto">
+    <h1>Bate Ponto</h1>
+</div>
+
+            <!-- Barra de Progresso -->
+            <div style="background: #E2E8F0; border-radius: 8px; height: 6px; margin-bottom: 20px; overflow: hidden;">
+                <div id="progressBarDono" style="width: 16%; background: #FF7A00; height: 100%; transition: width 0.3s;"></div>
+            </div>
+
+            <!-- Conteúdo Dinâmico das Perguntas do Dono -->
+            <div id="stepContainerDono">
+                <!-- Injeta via JS -->
+            </div>
+        </div>
+
+        <div id="btnContainerDono">
+            <button class="btn-orange" onclick="proximoPassoDono()">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        let stepDono = 1;
+        const dataDono = { apelido: '', obra: '', dias: '', diaria: '', tarefas: '' };
+
+        function renderStepDono() {
+            const container = document.getElementById('stepContainerDono');
+            document.getElementById('progressBarDono').style.width = `${(stepDono / 6) * 100}%`;
+
+            if(stepDono === 1) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Qual é o seu apelido?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Como prefere ser chamado na gestão.</p>
+                    <div class="input-group">
+                        <input type="text" id="respD1" placeholder="Ex: Carlos" value="${dataDono.apelido}">
+                    </div>`;
+            } else if(stepDono === 2) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Qual é o nome da Obra?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Identificação do canteiro de obras.</p>
+                    <div class="input-group">
+                        <input type="text" id="respD2" placeholder="Ex: Obra Residencial Parque" value="${dataDono.obra}">
+                    </div>`;
+            } else if(stepDono === 3) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Quantos dias de obra?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Previsão de duração total do projeto.</p>
+                    <div class="input-group">
+                        <input type="text" id="respD3" placeholder="Ex: 120 dias" value="${dataDono.dias}">
+                    </div>`;
+            } else if(stepDono === 4) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Qual o valor da diária padrão?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Valor base pago por dia de trabalho.</p>
+                    <div class="input-group">
+                        <input type="text" id="respD4" placeholder="Ex: R$ 150,00" value="${dataDono.diaria}">
+                    </div>`;
+            } else if(stepDono === 5) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 8px;">Quais tarefas exercidas na obra?</h2>
+                    <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 20px;">Separe por vírgulas (ex: Alvenaria, Pintura).</p>
+                    <div class="input-group">
+                        <input type="text" id="respD5" placeholder="Ex: Alvenaria, Pintura, Elétrica" value="${dataDono.tarefas}">
+                    </div>`;
+            } else if(stepDono === 6) {
+                container.innerHTML = `
+                    <h2 style="font-size: 1.25rem; color: #0F172A; margin-bottom: 12px;">Revise as informações</h2>
+                    <div class="card" style="font-size: 0.95rem; color: #334155; line-height: 1.6;">
+                        <p>👤 <strong>Apelido:</strong> ${dataDono.apelido}</p>
+                        <p>🏗️ <strong>Obra:</strong> ${dataDono.obra}</p>
+                        <p>📅 <strong>Dias de Obra:</strong> ${dataDono.dias}</p>
+                        <p>💰 <strong>Valor da Diária:</strong> ${dataDono.diaria}</p>
+                        <p>🛠️ <strong>Tarefas:</strong> ${dataDono.tarefas}</p>
+                    </div>`;
+                document.querySelector('.btn-orange').innerText = "Confirmar e Criar Obra";
+            }
+        }
+
+        function proximoPassoDono() {
+            if(stepDono === 1) {
+                const val = document.getElementById('respD1').value;
+                if(!val) return alert('Digite o seu apelido!');
+                dataDono.apelido = val;
+            } else if(stepDono === 2) {
+                const val = document.getElementById('respD2').value;
+                if(!val) return alert('Digite o nome da obra!');
+                dataDono.obra = val;
+            } else if(stepDono === 3) {
+                const val = document.getElementById('respD3').value;
+                if(!val) return alert('Digite os dias de obra!');
+                dataDono.dias = val;
+            } else if(stepDono === 4) {
+                const val = document.getElementById('respD4').value;
+                if(!val) return alert('Digite o valor da diária!');
+                dataDono.diaria = val;
+            } else if(stepDono === 5) {
+                const val = document.getElementById('respD5').value;
+                if(!val) return alert('Digite as tarefas exercidas!');
+                dataDono.tarefas = val;
+            } else if(stepDono === 6) {
+                localStorage.setItem('dadosPerfil', JSON.stringify({ nome: dataDono.apelido, obra: dataDono.obra, diaria: dataDono.diaria, funcao: 'Gestor / Dono' }));
+                window.location.href = 'app.html';
+                return;
+            }
+            stepDono++;
+            renderStepDono();
+        }
+
+        renderStepDono();
+    </script>
+</body>
+</html>
